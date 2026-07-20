@@ -476,17 +476,36 @@ if (isset($_GET["parquet"])) {
 				};
 			}
 
-			/** Numeric-aware comparison; falls back to string comparison. */
+			/** Numeric-aware comparison; falls back to string comparison. Both sides
+			* are passed through scalar() first so dates/objects never reach here raw. */
 			private static function compare($a, $b): int {
+				$a = self::scalar($a);
+				$b = self::scalar($b);
 				if (is_numeric($a) && is_numeric($b)) {
 					return $a <=> $b;
 				}
 				return strcmp((string) $a, (string) $b);
 			}
 
+			/** Reduce a raw flow-php value to a comparable scalar for WHERE/ORDER.
+			* flow-php yields DateTimeImmutable for date/time/timestamp columns and
+			* arrays/objects for nested LIST/MAP/STRUCT columns, none of which are
+			* string-castable on their own. */
 			private static function scalar($v) {
+				if ($v === null || is_int($v) || is_float($v) || is_string($v)) {
+					return $v;
+				}
 				if (is_bool($v)) {
 					return $v ? 1 : 0;
+				}
+				if ($v instanceof \DateTimeInterface) {
+					return $v->format('Y-m-d H:i:s');
+				}
+				if (is_object($v) && method_exists($v, '__toString')) {
+					return (string) $v;
+				}
+				if (is_array($v) || is_object($v)) {
+					return json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 				}
 				return $v;
 			}
