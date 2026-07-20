@@ -1,0 +1,22 @@
+{
+	"name": "nekromoff/adminer-parquet",
+	"description": "Read-only Parquet driver/plugin for Adminer 5.x (pure PHP, no native library)",
+	"type": "library",
+	"license": "Apache-2.0",
+	"require": {
+		"php": ">=8.3",
+		"ext-bcmath": "*",
+		"ext-zlib": "*",
+		"flow-php/parquet": "^0.41"
+	},
+	"suggest": {
+		"ext-zstd": "Required to read Zstandard-compressed Parquet files (the common default from Spark/Arrow/DuckDB). Install via PECL: 'sudo apt-get install php-dev php-pear && sudo pecl install zstd'. Also add 'extension=zstd.so' to your 'php.ini' file to enable and restart server.",
+		"vrana/adminer": "Adminer 5.x, the database management tool this driver plugs into"
+	},
+	"autoload": {
+		"files": [
+			"parquet-driver.php",
+			"parquet-login.php"
+		]
+	}
+}
