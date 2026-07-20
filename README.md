@@ -140,6 +140,32 @@ On Adminer's login screen:
 Files under the directory are listed recursively as tables; open one to browse it,
 search/sort columns, and page through rows.
 
+## Read-only mode
+
+This driver is **read-only by design** — Parquet is an immutable columnar file
+format read here through the pure-PHP `flow-php/parquet` library, which has no
+write path in this integration. Unlike the DuckDB driver (whose read-only open is
+an optional, reversible safety setting), there is **no toggle** to make Parquet
+writable: every mutating hook in `parquet-driver.php`
+(`insert`/`update`/`delete`, `create`/`alter`/`drop`, indexes, foreign keys,
+triggers, transactions) returns `false`, and `support()` advertises only
+`columns`, `table`, and `dump`.
+
+Consequence: browsing and `SELECT` (search, sort, paging, export) work; anything
+that would change data is unavailable.
+
+### The "Edit" links lead to an error
+
+Adminer still renders its per-row **edit** links (and the **insert**/**edit**
+forms) for Parquet tables, but because the driver exposes no writable backend
+those pages end in an error when opened or submitted. This is expected, not a bug:
+Parquet has no primary key or rowid to address a single row by, and there is
+nothing to save changes to. Use **select** (the table browse view) to inspect
+data; ignore the edit links.
+
+If you need to modify the data, do it at the source that produces the Parquet
+files (Spark, Arrow, DuckDB, pandas, …) and re-export; Adminer is a viewer here.
+
 ## Supported
 
 Browsing the file/table list (recursive), viewing a table's columns and types,
@@ -149,6 +175,10 @@ row counts and file sizes, `SELECT` with search (`=`, `<`, `>`, `<=`, `>=`, `!=`
 
 Nested `LIST` / `MAP` / `STRUCT` columns are shown JSON-encoded (marked "nested"
 in the field list).
+
+> **Note:** this driver is **read-only** — there is no writable mode for Parquet.
+> See [Read-only mode](#read-only-mode), including why the **Edit** links lead to
+> an error.
 
 ## Not supported
 
