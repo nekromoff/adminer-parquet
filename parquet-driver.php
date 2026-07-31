@@ -642,13 +642,15 @@ if (isset($_GET["parquet"])) {
 
 		/** All *.parquet files under $dir, recursing into every subdirectory.
 		* e.g. warehouse/ -> warehouse/a.parquet, warehouse/sales/2024.parquet, ...
+		* Subdirectories we may not read (permissions) are skipped, not fatal.
 		* @return list<string> absolute file paths
 		*/
 		function parquet_files(string $dir): array {
 			$files = array();
 			$it = new \RecursiveIteratorIterator(
 				new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS | \FilesystemIterator::FOLLOW_SYMLINKS),
-				\RecursiveIteratorIterator::LEAVES_ONLY
+				\RecursiveIteratorIterator::LEAVES_ONLY,
+				\RecursiveIteratorIterator::CATCH_GET_CHILD
 			);
 			foreach ($it as $entry) {
 				if ($entry->isFile() && preg_match('~\.(parquet|parq|pqt)$~i', $entry->getFilename())) {
