@@ -268,6 +268,9 @@ if (isset($_GET["parquet"])) {
 			static $extensions = array("Parquet");
 			static $jush = "sqlite"; // closest dialect for JUSH highlighting of identifiers
 
+			/** @var string pseudo-query of the last select(); newer Adminer declares it too and prints it also on the Edit page */
+			public $query = "";
+
 			protected $types = array(
 				array(
 					"boolean" => 0,
@@ -305,8 +308,9 @@ if (isset($_GET["parquet"])) {
 				$conn = $this->conn;
 				$file = $conn->open($table);
 				if ($file === null) {
+					$this->query = "SELECT FROM " . $table;
 					if ($print) {
-						echo adminer()->selectQuery("SELECT FROM " . $table, $start, true);
+						echo adminer()->selectQuery($this->query, $start, true);
 					}
 					return false;
 				}
@@ -351,8 +355,9 @@ if (isset($_GET["parquet"])) {
 					}
 				} catch (\Throwable $e) {
 					$conn->error = $e->getMessage();
+					$this->query = "SELECT FROM " . table($table);
 					if ($print) {
-						echo adminer()->selectQuery("SELECT FROM " . table($table), $start, true);
+						echo adminer()->selectQuery($this->query, $start, true);
 					}
 					return false;
 				}
@@ -378,8 +383,9 @@ if (isset($_GET["parquet"])) {
 				}
 
 				$types = self::columnTypes($file);
+				$this->query = self::describeQuery($table, $selected, $where, $order, $limit, $offset);
 				if ($print) {
-					echo adminer()->selectQuery(self::describeQuery($table, $selected, $where, $order, $limit, $offset), $start, false);
+					echo adminer()->selectQuery($this->query, $start, false);
 				}
 				return new Result($projected, $selected, $types);
 			}
