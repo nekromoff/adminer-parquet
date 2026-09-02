@@ -282,6 +282,11 @@ if (isset($_GET["parquet"])) {
 			public $functions = array();
 			public $grouping = array();
 
+			// Adminer 6.0.2 replaced the property by a method
+			function operators(?array $tableStatus): array {
+				return $this->operators;
+			}
+
 			function structuredTypes(): array {
 				return array_keys($this->types[0]);
 			}
