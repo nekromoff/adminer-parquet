@@ -249,11 +249,21 @@ if (isset($_GET["parquet"])) {
 					return null;
 				}
 				try {
-					return \Flow\Parquet\Reader::php()->read($file);
+					return $this->read($file);
 				} catch (\Throwable $e) {
 					$this->error = $e->getMessage();
 					return null;
 				}
+			}
+
+			/** Read a Parquet file, through the executeQuery() hook in Adminer 6.3+ so that plugins can log it
+			* @return \Flow\Parquet\ParquetFile
+			*/
+			function read(string $file) {
+				$read = function () use ($file) {
+					return \Flow\Parquet\Reader::php()->read($file);
+				};
+				return (method_exists('Adminer\Adminer', 'executeQuery') ? adminer()->executeQuery($file, $read) : $read());
 			}
 
 			// Parquet has no query language; select() on the Driver reads files directly.
@@ -707,7 +717,7 @@ if (isset($_GET["parquet"])) {
 				if (is_file($file)) {
 					$dataLength = filesize($file);
 					try {
-						$rows = \Flow\Parquet\Reader::php()->read($file)->metadata()->rowsNumber();
+						$rows = $conn->read($file)->metadata()->rowsNumber();
 					} catch (\Throwable $e) {
 						$rows = null;
 					}
